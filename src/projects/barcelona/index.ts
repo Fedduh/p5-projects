@@ -1,9 +1,18 @@
-import { getRandomGrey, getRandomOrange } from "../../helpers/colors";
-import { STREET_COLOR, BLOCKS, BLOCK_W, BLOCK_GAP, BLOCK_H, BLOCK_RADIUS, HOUSES, CANV_H, CANV_W, HOUSE_H, HOUSE_W, TREE_NR_STEPS } from "./constants";
+import { STREET_COLOR, BLOCKS, BLOCK_W, BLOCK_GAP, BLOCK_H, BLOCK_RADIUS, CANV_H, CANV_W, } from "./constants";
 import { drawBlockTrees } from "./elements/blocktrees";
 import { drawHouse } from "./elements/house";
+import { createRandomizedBlocks } from "./setupBlockData";
 
-type Direction = 'n' | 'e' | 's' | 'w';
+export type Direction = 'n' | 'e' | 's' | 'w';
+
+export type HouseFillBlock = {
+    index: number;
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    color: string;
+}
 
 export type House = {
     index: number;
@@ -12,6 +21,7 @@ export type House = {
     isInner: boolean;
     corner: string;
     color: string;
+    innerFillBlocks: HouseFillBlock[];
 }
 
 export interface RandomBlock {
@@ -34,119 +44,12 @@ export interface RandomBlock {
 export const barcelona = (p5: p5) => {
     let blocks: RandomBlock[] = [];
 
-    // START - generate random blocks data
-    const getCorner = (x: number, y: number): string => {
-        let corner = "none";
-        if (x === 0 && y === 0) {
-            corner = "topleft";
-        }
-        if (x === HOUSES - 1 && y === 0) {
-            corner = "topright";
-        }
-        if (x === HOUSES - 1 && y === HOUSES - 1) {
-            corner = "bottomright";
-        }
-        if (x === 0 && y === HOUSES - 1) {
-            corner = "bottomleft";
-        }
-
-        return corner;
-    };
-
-    const getRandomHouses = (blockStartX: number, blockStartY: number) => {
-        let houses: House[] = [];
-
-        for (let x = 0; x < HOUSES; x++) {
-            for (let y = 0; y < HOUSES; y++) {
-                let isInner = false;
-                if (x > 0 && y > 0 && x < HOUSES - 1 && y < HOUSES - 1) {
-                    isInner = true;
-                }
-                houses.push({
-                    index: 0, // set later after randomize order
-                    startHouseX: blockStartX + x * HOUSE_W,
-                    startHouseY: blockStartY + y * HOUSE_H,
-                    isInner,
-                    corner: getCorner(x, y),
-                    color: isInner ? getRandomGrey(p5) : getRandomOrange(p5)
-                });
-            }
-        }
-
-        houses = houses
-            .sort(() => Math.random() - 0.5)
-            .map((house, index) => {
-                return { ...house, ...{ index } };
-            });
-
-        return houses;
-    }
-
-    const getRandomTrees = () => {
-        const trees: RandomBlock["trees"] = [];
-
-        (["n", "e", "s", "w"] as Direction[]).forEach((direction) => {
-            if (p5.random(0, 1) < 0.75) {
-                // skip random sides of a block
-                trees.push({ direction, steps: [] });
-            }
-        });
-
-        trees.forEach((tree) => {
-            for (let i = 1; i < TREE_NR_STEPS; i++) {
-                // skip randomnly
-                if (p5.random(0, 1) < 0.4) {
-                    continue;
-                }
-
-                tree.steps.push({
-                    index: i,
-                    color: `hsl(${"" + Math.floor(p5.random(75, 150))},80%, 30%)`,
-                    diameter: Math.floor(p5.random(6, 16))
-                });
-            }
-        });
-
-        trees.sort(() => Math.random() - 0.5);
-
-        return trees;
-    }
-
-    const getRandomBlockOrder = () => {
-        let randomBlocks: RandomBlock[] = [];
-        for (let bx = 0; bx < BLOCKS; bx++) {
-            for (let by = 0; by < BLOCKS; by++) {
-                const blockStartX = bx * BLOCK_W + BLOCK_GAP + BLOCK_GAP * bx;
-                const blockStartY = by * BLOCK_H + BLOCK_GAP + BLOCK_GAP * by;
-
-                randomBlocks.push({
-                    index: 0, // set later after randomize order
-                    x: bx,
-                    y: by,
-                    startBlockX: blockStartX,
-                    startBlockY: blockStartY,
-                    trees: getRandomTrees(),
-                    houses: getRandomHouses(blockStartX, blockStartY)
-                });
-            }
-        }
-
-        randomBlocks = randomBlocks
-            .sort(() => Math.random() - 0.5)
-            .map((block, index) => {
-                // todo: could randomize the index a bit for fluid / random spawning
-                return { ...block, ...{ index } };
-            });
-
-        return randomBlocks;
-    }
-    // END - generate random blocks data
 
     p5.setup = () => {
-        p5.createCanvas(600, 600);
+        p5.createCanvas(CANV_W, CANV_H);
         p5.frameRate(3);
         p5.colorMode(p5.HSL);
-        blocks = getRandomBlockOrder();
+        blocks = createRandomizedBlocks(p5);
     }
 
     p5.draw = () => {
@@ -159,16 +62,15 @@ export const barcelona = (p5: p5) => {
                 return;
             }
 
-            drawBlockTrees(p5, block);
-
-            // BLOCK
+            // draw block
             p5.fill("rgb(226,226,226)");
             p5.noStroke();
             p5.rect(block.startBlockX, block.startBlockY, BLOCK_W, BLOCK_H, BLOCK_RADIUS);
 
-            let isInner;
+            // draw trees
+            drawBlockTrees(p5, block);
 
-            // HOUSES within BLOCK
+            // draw houses within block
             block.houses.forEach((house) => {
                 drawHouse(p5, house, block.index);
             });
