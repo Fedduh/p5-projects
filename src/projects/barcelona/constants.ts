@@ -3,7 +3,7 @@ export const CANV_H = CANV_W;
 
 export const STREET_COLOR = "rgb(45,25,17)";
 
-export const BLOCKS = 4;
+export const BLOCKS = 3;
 export const BLOCK_GAP = 30;
 export const BLOCK_W = (CANV_W - BLOCK_GAP * (BLOCKS + 1)) / BLOCKS;
 export const BLOCK_H = BLOCK_W;

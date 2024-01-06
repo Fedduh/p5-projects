@@ -49,6 +49,8 @@ export const barcelona = (p5: p5) => {
             }
         });
 
+        trees.sort(() => Math.random() - 0.5);
+
         return trees;
     }
 
@@ -56,8 +58,7 @@ export const barcelona = (p5: p5) => {
         let randomBlocks: RandomBlock[] = [];
         for (let bx = 0; bx < BLOCKS; bx++) {
             for (let by = 0; by < BLOCKS; by++) {
-                // add in random place in randomBlocks
-                randomBlocks.splice(Math.floor(p5.random(randomBlocks.length)), 0, {
+                randomBlocks.push({
                     index: 0, // set later after randomize order
                     x: bx,
                     y: by,
@@ -68,10 +69,12 @@ export const barcelona = (p5: p5) => {
             }
         }
 
-        randomBlocks = randomBlocks.map((block, index) => {
-            // todo: could randomize the index a bit for fluid / random spawning
-            return { ...block, ...{ index } };
-        });
+        randomBlocks = randomBlocks
+            .sort(() => Math.random() - 0.5)
+            .map((block, index) => {
+                // todo: could randomize the index a bit for fluid / random spawning
+                return { ...block, ...{ index } };
+            });
 
         return randomBlocks;
     }

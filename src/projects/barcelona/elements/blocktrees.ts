@@ -11,7 +11,7 @@ export const drawBlockTrees = (p5: p5, block: RandomBlock) => {
         // 0 - 20 tree steps
         tree.steps.forEach((step, i) => {
             // draw trees incrementally after block spawn
-            if (p5.frameCount < i + block.index + 1) {
+            if (p5.frameCount < i + block.index + 2) {
                 return;
             }
 
