@@ -1,42 +1,31 @@
-import { getRandomGrey, getRandomOrange } from "../../../helpers/colors";
-import { HOUSE_W, HOUSE_H, HOUSES, BLOCK_RADIUS } from "../constants";
+import { House } from "..";
+import { HOUSE_W, HOUSE_H, BLOCK_RADIUS } from "../constants";
 
-export const drawHouse = (p5: p5, xStart: number, yStart: number, xIndex: number, yIndex: number, isInner: boolean) => {
-    const color = isInner ? getRandomGrey(p5) : getRandomOrange(p5);
-    p5.fill(color);
-    // noFill();
+export const drawHouse = (p5: p5, house: House, blockIndex: number) => {
+    if (p5.frameCount < house.index + 2 + blockIndex) {
+        return;
+    }
+
+    p5.fill(house.color);
+
     // stroke(getRandomGrey());
-    if (isInner) {
+    if (house.isInner) {
         p5.noStroke();
     }
 
-    let corner = "none";
-    if (xIndex === 0 && yIndex === 0) {
-        corner = "topleft";
-    }
-    if (xIndex === HOUSES - 1 && yIndex === 0) {
-        corner = "topright";
-    }
-    if (xIndex === HOUSES - 1 && yIndex === HOUSES - 1) {
-        corner = "bottomright";
-    }
-    if (xIndex === 0 && yIndex === HOUSES - 1) {
-        corner = "bottomleft";
-    }
-
     p5.rect(
-        xStart,
-        yStart,
+        house.startHouseX,
+        house.startHouseY,
         HOUSE_W,
         HOUSE_H,
         // RADIUS will not be correct (smaller square)
-        corner === "topleft" ? BLOCK_RADIUS : 0,
-        corner === "topright" ? BLOCK_RADIUS : 0,
-        corner === "bottomright" ? BLOCK_RADIUS : 0,
-        corner === "bottomleft" ? BLOCK_RADIUS : 0
+        house.corner === "topleft" ? BLOCK_RADIUS : 0,
+        house.corner === "topright" ? BLOCK_RADIUS : 0,
+        house.corner === "bottomright" ? BLOCK_RADIUS : 0,
+        house.corner === "bottomleft" ? BLOCK_RADIUS : 0
     );
 
-    drawInHouse(p5, xStart, yStart, HOUSE_W, HOUSE_H, isInner, corner);
+    // drawInHouse(p5, house.startHouseX, house.startHouseY, HOUSE_W, HOUSE_H, house.isInner, house.corner);
 }
 
 const drawInHouse = (p5: p5, houseX: number, houseY: number, houseW: number, houseH: number, isInner: boolean, corner: string) => {
