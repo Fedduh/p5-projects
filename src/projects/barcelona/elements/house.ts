@@ -1,5 +1,5 @@
-import { getRandomGrey, getRandomOrange } from "../../helpers/colors";
-import { HOUSE_W, HOUSE_H, HOUSES, BLOCK_RADIUS } from "./constants";
+import { getRandomGrey, getRandomOrange } from "../../../helpers/colors";
+import { HOUSE_W, HOUSE_H, HOUSES, BLOCK_RADIUS } from "../constants";
 
 export const drawHouse = (p5: p5, xStart: number, yStart: number, xIndex: number, yIndex: number, isInner: boolean) => {
     const color = isInner ? getRandomGrey(p5) : getRandomOrange(p5);

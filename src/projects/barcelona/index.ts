@@ -1,11 +1,15 @@
 import { STREET_COLOR, BLOCKS, BLOCK_W, BLOCK_GAP, BLOCK_H, BLOCK_RADIUS, HOUSES, CANV_H, CANV_W, HOUSE_H, HOUSE_W, TREE_NR_STEPS } from "./constants";
-import { drawHouse } from "./house";
+import { drawBlockTrees } from "./elements/blocktrees";
+import { drawHouse } from "./elements/house";
 
 type Direction = 'n' | 'e' | 's' | 'w';
 
-interface RandomBlock {
+export interface RandomBlock {
     x: number;
     y: number;
+    startBlockX: number;
+    startBlockY: number;
+    index: number;
     trees: {
         direction: Direction;
         steps: {
@@ -17,9 +21,9 @@ interface RandomBlock {
 }
 
 export const barcelona = (p5: p5) => {
-    let frame = 0;
     let blocks: RandomBlock[] = [];
 
+    // START - generate random blocks data
     const getRandomTrees = () => {
         const trees: RandomBlock["trees"] = [];
 
@@ -49,18 +53,29 @@ export const barcelona = (p5: p5) => {
     }
 
     const getRandomBlockOrder = () => {
-        const randomBlocks: RandomBlock[] = [];
+        let randomBlocks: RandomBlock[] = [];
         for (let bx = 0; bx < BLOCKS; bx++) {
             for (let by = 0; by < BLOCKS; by++) {
                 // add in random place in randomBlocks
                 randomBlocks.splice(Math.floor(p5.random(randomBlocks.length)), 0, {
-                    x: bx, y: by,
+                    index: 0, // set later after randomize order
+                    x: bx,
+                    y: by,
+                    startBlockX: bx * BLOCK_W + BLOCK_GAP + BLOCK_GAP * bx,
+                    startBlockY: by * BLOCK_H + BLOCK_GAP + BLOCK_GAP * by,
                     trees: getRandomTrees()
                 });
             }
         }
+
+        randomBlocks = randomBlocks.map((block, index) => {
+            // todo: could randomize the index a bit for fluid / random spawning
+            return { ...block, ...{ index } };
+        });
+
         return randomBlocks;
     }
+    // END - generate random blocks data
 
     p5.setup = () => {
         p5.createCanvas(600, 600);
@@ -73,22 +88,18 @@ export const barcelona = (p5: p5) => {
         p5.background(STREET_COLOR);
 
         // draw BLOCKS
-        blocks.forEach((block, index) => {
+        blocks.forEach((block) => {
             // draw incrementally
-            if (frame < index) {
+            if (p5.frameCount < block.index + 1) {
                 return;
             }
 
-            const startBlockX = block.x * BLOCK_W + BLOCK_GAP + BLOCK_GAP * block.x;
-            const startBlockY = block.y * BLOCK_H + BLOCK_GAP + BLOCK_GAP * block.y;
-
-            drawBlockTrees(block.trees, startBlockX, startBlockY);
+            drawBlockTrees(p5, block);
 
             // BLOCK
             p5.fill("rgb(226,226,226)");
-            // stroke("white");
             p5.noStroke();
-            p5.rect(startBlockX, startBlockY, BLOCK_W, BLOCK_H, BLOCK_RADIUS);
+            p5.rect(block.startBlockX, block.startBlockY, BLOCK_W, BLOCK_H, BLOCK_RADIUS);
 
             let isInner;
 
@@ -99,46 +110,18 @@ export const barcelona = (p5: p5) => {
                     if (x > 0 && y > 0 && x < HOUSES - 1 && y < HOUSES - 1) {
                         isInner = true;
                     }
-                    drawHouse(p5, startBlockX + x * HOUSE_W, startBlockY + y * HOUSE_H, x, y, isInner);
+                    drawHouse(p5, block.startBlockX + x * HOUSE_W, block.startBlockY + y * HOUSE_H, x, y, isInner);
                 }
             }
         });
         // draw streets accross, over all blocks
         // drawCrossStreets();
 
-        if (frame > 7) {
+        if (p5.frameCount > 18) {
             p5.noLoop();
         }
-        frame++;
     }
 
-    const drawBlockTrees = (trees: RandomBlock["trees"], startBlockX: number, startBlockY: number) => {
-        p5.noStroke();
-
-        const stepX = BLOCK_W / TREE_NR_STEPS;
-        const stepY = BLOCK_H / TREE_NR_STEPS;
-
-        trees.forEach((tree) => {
-            // 0 - 20 tree steps
-            tree.steps.forEach((step) => {
-                p5.fill(step.color);
-                let startX = startBlockX;
-                if (tree.direction === "e") {
-                    startX += BLOCK_W;
-                }
-
-                let startY = startBlockY;
-                if (tree.direction === "s") {
-                    startY += BLOCK_H;
-                }
-                p5.circle(
-                    startX + stepX * (["n", "s"].includes(tree.direction) ? step.index : 0),
-                    startY + stepY * (["e", "w"].includes(tree.direction) ? step.index : 0),
-                    step.diameter
-                );
-            });
-        });
-    };
 
     const drawCrossStreets = () => {
         // blockDimension: the Height of Width of the block
